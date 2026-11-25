@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cloud Waste Segregation System | Microsoft Azure Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        azure: {
+                            50: '#f0f8ff',
+                            100: '#e0f0fe',
+                            400: '#38bdf8',
+                            500: '#0078D4',
+                            600: '#0063B1',
+                            700: '#004E8C',
+                            800: '#003966',
+                            900: '#00264d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #0b1120; color: #f1f5f9; }
+        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.15); }
+        .azure-glow { box-shadow: 0 0 25px -5px rgba(0, 120, 212, 0.3); }
+        .toast { transition: transform 0.3s ease, opacity 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen antialiased flex flex-col justify-between">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-azure-600 to-sky-400 flex items-center justify-center shadow-lg shadow-azure-500/20">
+                    <i data-lucide="cloud-rain" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-bold tracking-tight text-white">AI Cloud Waste Segregation</h1>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-azure-500/20 text-azure-400 font-semibold border border-azure-500/30">AZURE EDITION</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Autonomous FinOps & Telemetry Segregator</p>
+                </div>
+            </div>
+
+            <!-- Azure Connection Status Pill -->
+            <div class="flex items-center gap-3">
+                <div id="azureStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="azureStatusText" class="text-slate-300 font-medium">Checking Azure...</span>
+                </div>
+                <button onclick="scanResources()" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Rescan</span>
+                </button>
+                <button onclick="optimizeAllWaste()" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-gradient-to-r from-azure-600 to-sky-500 hover:from-azure-500 hover:to-sky-400 text-xs font-bold text-white shadow-md shadow-azure-500/25 transition">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    <span>Optimize All Waste</span>
+                </button>
+                <button onclick="resetBaseline()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition" title="Reset Environment">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+        <!-- Executive KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KPI 1 -->
+            <div class="glass-panel p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Identified Waste</p>
+                    <h3 id="kpiWasteCount" class="text-2xl font-bold text-white mt-1">--</h3>
+                    <p id="kpiWastePct" class="text-xs text-rose-400 mt-1 flex items-center gap-1 font-medium">
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline"></i> Analyzing...
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                    <i data-lucide="trash-2" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 2 -->
+            <div class="glass-panel p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Potential Monthly Savings</p>
+                    <h3 id="kpiSavings" class="text-2xl font-bold text-emerald-400 mt-1">--</h3>
+                    <p id="kpiAnnualSavings" class="text-xs text-emerald-300/80 mt-1 font-medium">-- / yr forecast</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 3 -->
+            <div class="glass-panel p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Azure Monthly Spend</p>
+                    <h3 id="kpiSpend" class="text-2xl font-bold text-slate-100 mt-1">--</h3>
+                    <p class="text-xs text-slate-400 mt-1">Azure Compute & Storage</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-azure-500/10 border border-azure-500/20 flex items-center justify-center text-azure-400">
+                    <i data-lucide="server" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- KPI 4 -->
+            <div class="glass-panel p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Optimization Score</p>
+                    <h3 id="kpiScore" class="text-2xl font-bold text-sky-400 mt-1">--</h3>
+                    <p class="text-xs text-slate-400 mt-1">Health Index (0-100)</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                    <i data-lucide="gauge" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Doughnut Chart: AI Waste Categories -->
+            <div class="glass-panel p-5 rounded-xl lg:col-span-1 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-azure-400"></i>
+                        <span>AI Waste Segregation Breakdown</span>
+                    </h3>
+                </div>
+                <div class="relative flex items-center justify-center my-auto h-56">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-4 text-xs">
+                    <div class="flex items-center gap-2 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Idle Zombie</div>
+                    <div class="flex items-center gap-2 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Overprovisioned</div>
+                    <div class="flex items-center gap-2 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Orphan Storage</div>
+                    <div class="flex items-center gap-2 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Optimal (Healthy)</div>
+                </div>
+            </div>
+
+            <!-- Line/Bar Chart: Historical Cloud Waste & Savings Trends -->
+            <div class="glass-panel p-5 rounded-xl lg:col-span-2 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                        <span>FinOps Waste vs Savings Trend (Last 6 Months)</span>
+                    </h3>
+                    <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono">Monthly USD ($)</span>
+                </div>
+                <div class="h-64 w-full">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Azure Resources Detailed Table -->
+        <div class="glass-panel rounded-xl overflow-hidden shadow-xl">
+            <div class="p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-azure-400"></i>
+                        <span>Monitored Azure Resources & Remediation Actions</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Real-time telemetry evaluated by Scikit-Learn KMeans clustering & rule heuristics</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="text" id="searchInput" placeholder="Filter resources..." oninput="filterTable()" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-azure-500 w-48">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/90 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
+                        <tr>
+                            <th class="py-3.5 px-4">Azure Resource</th>
+                            <th class="py-3.5 px-4">Region & SKU</th>
+                            <th class="py-3.5 px-4">Telemetry (CPU / RAM)</th>
+                            <th class="py-3.5 px-4">AI Classification</th>
+                            <th class="py-3.5 px-4 text-right">Monthly Spend</th>
+                            <th class="py-3.5 px-4 text-right">Potential Savings</th>
+                            <th class="py-3.5 px-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resourcesTableBody" class="divide-y divide-slate-800/60 font-normal">
+                        <!-- Populated by JS -->
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-slate-500">Loading Azure telemetry...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        AI-Powered Cloud Waste Segregation System &bull; Microsoft Azure FinOps &bull; Woxsen University Project
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        let currentResources = [];
+        let categoryChartInstance = null;
+        let trendsChartInstance = null;
+
+        // Initialize icons and data
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            scanResources();
+            loadTrends();
+        });
+
+        async function scanResources() {
+            try {
+                showToast("Scanning Microsoft Azure infrastructure...", "info");
+                const res = await fetch('/recommendations');
+                const data = await res.json();
+                
+                // Update Azure badge
+                const statusText = document.getElementById('azureStatusText');
+                if (data.azure && data.azure.mode) {
+                    statusText.innerText = data.azure.mode;
+                }
+
+                currentResources = data.results || [];
+                updateKPIs(data.summary);
+                renderTable(currentResources);
+                renderCategoryChart(currentResources);
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to fetch Azure telemetry.", "error");
+            }
+        }
+
+        function updateKPIs(summary) {
+            if (!summary) return;
+            document.getElementById('kpiWasteCount').innerText = `${summary.waste_count} / ${summary.total_resources}`;
+            document.getElementById('kpiWastePct').innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline"></i> ${summary.waste_percentage}% of assets are waste`;
+            document.getElementById('kpiSavings').innerText = `$${summary.total_monthly_savings.toFixed(2)}`;
+            document.getElementById('kpiAnnualSavings').innerText = `$${summary.total_annual_savings.toFixed(2)} / yr forecast`;
+            document.getElementById('kpiSpend').innerText = `$${summary.total_monthly_spend.toFixed(2)}`;
+            
+            // Health Score calculation (100 minus waste penalty)
+            const healthScore = Math.max(10, Math.round(100 - (summary.waste_percentage * 0.8)));
+            document.getElementById('kpiScore').innerText = `${healthScore} / 100`;
+        }
+
+        function renderTable(resources) {
+            const tbody = document.getElementById('resourcesTableBody');
+            tbody.innerHTML = '';
+
+            if (!resources || resources.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500">No resources found.</td></tr>';
+                return;
+            }
+
+            resources.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+
+                // Badge styling
+                let badgeClass = "bg-slate-800 text-slate-400 border border-slate-700";
+                if (r.classification === 'IDLE_WASTE') badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold";
+                else if (r.classification === 'OVERPROVISIONED') badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold";
+                else if (r.classification === 'ORPHANED_STORAGE') badgeClass = "bg-purple-500/10 text-purple-400 border border-purple-500/30 font-semibold";
+                else if (r.classification === 'OPTIMAL') badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold";
+                else if (r.classification === 'OPTIMIZED') badgeClass = "bg-sky-500/10 text-sky-400 border border-sky-500/30 font-semibold";
+
+                // Action button
+                let actionBtn = `<span class="text-slate-500 text-xs font-mono">Retained</span>`;
+                if (r.recommended_action === 'DEALLOCATE') {
+                    actionBtn = `<button onclick="executeAction('${r.resource_id}', 'DEALLOCATE')" class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition shadow-sm">Deallocate</button>`;
+                } else if (r.recommended_action === 'RESIZE') {
+                    actionBtn = `<button onclick="executeAction('${r.resource_id}', 'RESIZE')" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition shadow-sm">Resize B2s</button>`;
+                } else if (r.recommended_action === 'DELETE') {
+                    actionBtn = `<button onclick="executeAction('${r.resource_id}', 'DELETE')" class="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition shadow-sm">Delete</button>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4">
+                        <div class="font-semibold text-white">${r.resource_id}</div>
+                        <div class="text-[10px] text-slate-400">${r.resource_type} &bull; ${r.status}</div>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono">
+                        <span class="text-azure-400">${r.sku}</span>
+                        <div class="text-[10px] text-slate-400">${r.region}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-12 text-[11px] font-mono">${r.cpu_avg.toFixed(1)}%</span>
+                            <div class="w-20 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div class="h-1.5 rounded-full ${r.cpu_avg > 60 ? 'bg-emerald-400' : (r.cpu_avg > 20 ? 'bg-amber-400' : 'bg-rose-400')}" style="width: ${Math.min(100, r.cpu_avg)}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-slate-500">RAM: ${r.memory_avg.toFixed(1)}% &bull; IOPS: ${r.disk_iops}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] inline-block ${badgeClass}">
+                            ${r.classification}
+                        </span>
+                        <div class="text-[10px] text-slate-400 mt-1 max-w-xs truncate" title="${r.rationale}">${r.rationale}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-medium text-slate-200">
+                        $${r.monthly_cost.toFixed(2)}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold ${r.potential_monthly_savings > 0 ? 'text-emerald-400' : 'text-slate-500'}">
+                        ${r.potential_monthly_savings > 0 ? '+$' + r.potential_monthly_savings.toFixed(2) : '$0.00'}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        ${actionBtn}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = currentResources.filter(r => 
+                r.resource_id.toLowerCase().includes(query) ||
+                r.sku.toLowerCase().includes(query) ||
+                r.classification.toLowerCase().includes(query) ||
+                r.region.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        async function executeAction(resourceId, action) {
+            try {
+                showToast(`Executing ${action} on ${resourceId}...`, "info");
+                const res = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resource_id: resourceId, action: action })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || `Action executed on ${resourceId}`, "success");
+                    scanResources(); // Refresh telemetry
+                } else {
+                    showToast(data.error || "Execution failed", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Network error executing action.", "error");
+            }
+        }
+
+        async function optimizeAllWaste() {
+            try {
+                showToast("Executing bulk Azure FinOps optimization...", "info");
+                const res = await fetch('/api/optimize-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, "success");
+                    scanResources();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to run bulk optimization.", "error");
+            }
+        }
+
+        async function resetBaseline() {
+            try {
+                const res = await fetch('/api/reset', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message, "info");
+                scanResources();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderCategoryChart(resources) {
+            const counts = { IDLE_WASTE: 0, OVERPROVISIONED: 0, ORPHANED_STORAGE: 0, OPTIMAL: 0, OPTIMIZED: 0 };
+            resources.forEach(r => {
+                if (counts[r.classification] !== undefined) counts[r.classification]++;
+                else counts.OPTIMAL++;
+            });
+
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Idle Zombie', 'Overprovisioned', 'Orphan Storage', 'Optimal', 'Optimized'],
+                    datasets: [{
+                        data: [counts.IDLE_WASTE, counts.OVERPROVISIONED, counts.ORPHANED_STORAGE, counts.OPTIMAL, counts.OPTIMIZED],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#a855f7', '#10b981', '#38bdf8'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
+
+        async function loadTrends() {
+            try {
+                const res = await fetch('/api/trends');
+                const data = await res.json();
+                const trends = data.trends || [];
+
+                const labels = trends.map(t => t.month);
+                const spendData = trends.map(t => t.cloud_spend);
+                const wasteData = trends.map(t => t.waste_cost);
+                const savingsData = trends.map(t => t.savings);
+
+                const ctx = document.getElementById('trendsChart').getContext('2d');
+                if (trendsChartInstance) trendsChartInstance.destroy();
+
+                trendsChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Total Azure Spend',
+                                data: spendData,
+                                borderColor: '#38bdf8',
+                                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: 'Wasted Spend',
+                                data: wasteData,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'transparent',
+                                borderDash: [4, 4],
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Cost Savings Realized',
+                                data: savingsData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#94a3b8', font: { size: 11 } }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                                ticks: { color: '#64748b' }
+                            },
+                            y: {
+                                grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                                ticks: {
+                                    color: '#64748b',
+                                    callback: function(value) { return '$' + value; }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Trends error:", err);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-slate-800 border-slate-700 text-slate-200';
+            let icon = 'info';
+            if (type === 'success') { bg = 'bg-emerald-900/90 border-emerald-600 text-emerald-200'; icon = 'check-circle'; }
+            if (type === 'error') { bg = 'bg-rose-900/90 border-rose-600 text-rose-200'; icon = 'alert-octagon'; }
+
+            toast.className = `toast pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-lg border shadow-xl text-xs backdrop-blur-md ${bg}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

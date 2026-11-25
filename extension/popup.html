@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Azure Cloud Waste Segregator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="logo-icon">☁️</div>
+      <div>
+        <h3>Azure Waste Segregator</h3>
+        <span class="subtext">AI-Powered Cloud FinOps</span>
+      </div>
+    </div>
+    <span id="azureBadge" class="badge-status">Azure Ready</span>
+  </div>
+
+  <div class="kpi-banner">
+    <div class="kpi-box">
+      <div class="kpi-title">Wasted Resources</div>
+      <div id="kpiWaste" class="kpi-val text-red">--</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-title">Monthly Savings</div>
+      <div id="kpiSavings" class="kpi-val text-green">--</div>
+    </div>
+  </div>
+
+  <p id="status_msg" class="status-text">Ready to scan Microsoft Azure assets.</p>
+  
+  <div class="button-row">
+    <button id="scanBtn" class="btn-primary">Scan Azure Resources</button>
+    <button id="optimizeBtn" class="btn-success hidden">Optimize All Waste</button>
+  </div>
+
+  <div id="results_area">
+    <div id="tableContainer" class="hidden">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Resource</th>
+            <th>SKU / CPU</th>
+            <th>AI Status</th>
+            <th>Savings</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <a href="http://localhost:5001" target="_blank" class="dashboard-link">Open Full Web Dashboard ↗</a>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

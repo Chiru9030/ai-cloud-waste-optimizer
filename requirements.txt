@@ -1,0 +1,17 @@
+# AI-Powered Cloud Waste Segregation System (Azure Edition)
+# Core Web & API Framework
+Flask>=3.0.0
+requests>=2.31.0
+
+# AI / Machine Learning & Data Processing
+scikit-learn>=1.4.0
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Optional: Live Microsoft Azure Cloud SDK (For connecting to real Azure subscriptions)
+# If these packages are omitted or not configured, the app runs in High-Fidelity Azure Simulation Mode.
+azure-identity>=1.15.0
+azure-mgmt-compute>=30.0.0
+azure-mgmt-monitor>=6.0.0
+azure-mgmt-resource>=23.0.0
+python-dotenv>=1.0.0

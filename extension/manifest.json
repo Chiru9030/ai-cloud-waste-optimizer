@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Cloud Waste Segregator",
+  "version": "1.0",
+  "description": "AI-powered waste classification using cloud integration",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "permissions": ["storage", "activeTab", "scripting"]
+}
